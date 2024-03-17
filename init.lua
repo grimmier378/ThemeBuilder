@@ -4,12 +4,13 @@ local mq = require('mq')
 local ImGui = require 'ImGui'
 local guiOpen = false
 local theme = require('themes')
-Icons = require('mq.ICONS')
+
 local settingsFile = string.format('%s/MyThemeZ_.lua', mq.configDir)
 local themeName = 'Default'
 local tmpName = 'Default'
 local StyleCount = 0
 local ColorCount = 0
+local ApplyGlobalTheme = false
 local tempSettings = {
     ['LoadTheme'] = 'Default',
     Theme = {
@@ -56,6 +57,16 @@ local function loadSettings()
     -- Deep copy theme into tempSettings
     tempSettings = deepcopy(theme)
 end
+local function getNextID(table)
+    local maxID = 0
+    for k, _ in pairs(table) do
+        local numericId = tonumber(k)
+        if numericId and numericId > maxID then
+            maxID = numericId
+        end
+    end
+    return maxID +1
+end
 -- GUI
 function ThemeBuilder(open)
     local ColorCount = 0
@@ -63,7 +74,7 @@ function ThemeBuilder(open)
         local themeID = 0
         local show = false
         local once = false
-        
+        ApplyGlobalTheme = false
         if theme and theme.Theme then
             for tID, tData in pairs(theme.Theme) do
                 if tData['Name'] == themeName then
@@ -76,9 +87,9 @@ function ThemeBuilder(open)
             end
         end
         
-        open, show = ImGui.Begin("Theme Builder##", open, bit32.bor(ImGuiWindowFlags.NoSavedSettings))
+        open, show = ImGui.Begin("Theme Builder##", open, bit32.bor(ImGuiWindowFlags.None))
         if not show then
-            ImGui.PopStyleColor(ColorCount)
+            if not ApplyGlobalTheme then ImGui.PopStyleColor(ColorCount) end
             ImGui.End()
 
             return open
@@ -100,7 +111,7 @@ function ThemeBuilder(open)
         if pressed then
             if tmpName == '' then tmpName = themeName end
             if tempSettings.Theme[themeID]['Name'] ~= tmpName then
-                local nID = themeID + 1
+                local nID = getNextID(tempSettings.Theme)
                 tempSettings.Theme[nID]= {
                     ['Name'] = tmpName,
                     ['Color'] = tempSettings.Theme[themeID]['Color'],
@@ -109,16 +120,55 @@ function ThemeBuilder(open)
             writeSettings(settingsFile, tempSettings)
             theme = deepcopy(tempSettings)
         end
+
+        ImGui.SameLine()
+
+        local newPressed = ImGui.Button("New")
+        if newPressed then
+            local nID = getNextID(tempSettings.Theme)
+                tempSettings.Theme[nID]= {
+                    ['Name'] = tmpName,
+                    ['Color'] = theme.Theme[themeID]['Color'],
+                }
+                themeName = tmpName
+            writeSettings(settingsFile, tempSettings)
+            theme = deepcopy(tempSettings)
+        end
+
+        ImGui.SameLine()
+
+        local gPressed = ImGui.Button("Apply Global")
+        if gPressed then
+            if tmpName == '' then tmpName = themeName end
+            if tempSettings.Theme[themeID]['Name'] ~= tmpName then
+                local nID = getNextID(tempSettings.Theme)
+                tempSettings.Theme[nID]= {
+                    ['Name'] = tmpName,
+                    ['Color'] = tempSettings.Theme[themeID]['Color'],
+                }
+            end
+            ApplyGlobalTheme = not ApplyGlobalTheme
+            -- writeSettings(settingsFile, tempSettings)
+            theme = deepcopy(tempSettings)
+        end
+
+        ImGui.SameLine()
+
+        local ePressed = ImGui.Button("Exit")
+        if ePressed then
+            guiOpen = false
+        end
         -- Edit Name
         ImGui.Text("Cur Theme: %s", themeName)
         tmpName =ImGui.InputText("Theme Name", tmpName)
+
         if ImGui.BeginCombo("Loaded Theme", 'None') then
             for k, data in pairs(tempSettings.Theme) do
                 local isSelected = (tempSettings.Theme[k]['Name'] == themeName)
                 if ImGui.Selectable(tempSettings.Theme[k]['Name'], isSelected) then
                     tempSettings['LoadTheme'] = tempSettings.Theme[k]['Name']
                     themeName = tempSettings['LoadTheme']
-                    tmpName = ''
+                    tmpName = themeName
                 end
             end
             ImGui.EndCombo()
@@ -171,7 +221,7 @@ function ThemeBuilder(open)
             tempSettings.Theme[themeID]['Color'][ImGuiCol.NavHighlight]           = ImGui.ColorEdit4("NavHighlight##" , tempSettings.Theme[themeID]['Color'][ImGuiCol.NavHighlight])
         end
         ImGui.EndChild()
-        ImGui.PopStyleColor(ColorCount) 
+        if not ApplyGlobalTheme then ImGui.PopStyleColor(ColorCount) end
       --  print(ColorCount)
         ImGui.End()
         
