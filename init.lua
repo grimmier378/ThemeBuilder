@@ -4,12 +4,13 @@ local mq = require('mq')
 local ImGui = require 'ImGui'
 local guiOpen = false
 local theme = require('themes')
-Icons = require('mq.ICONS')
+
 local settingsFile = string.format('%s/MyThemeZ_.lua', mq.configDir)
 local themeName = 'Default'
 local tmpName = 'Default'
 local StyleCount = 0
 local ColorCount = 0
+local ApplyGlobalTheme = false
 local tempSettings = {
     ['LoadTheme'] = 'Default',
     Theme = {
@@ -56,6 +57,16 @@ local function loadSettings()
     -- Deep copy theme into tempSettings
     tempSettings = deepcopy(theme)
 end
+local function getNextID(table)
+    local maxID = 0
+    for k, _ in pairs(table) do
+        local numericId = tonumber(k)
+        if numericId and numericId > maxID then
+            maxID = numericId
+        end
+    end
+    return maxID +1
+end
 -- GUI
 function ThemeBuilder(open)
     local ColorCount = 0
@@ -63,7 +74,7 @@ function ThemeBuilder(open)
         local themeID = 0
         local show = false
         local once = false
-        
+        ApplyGlobalTheme = false
         if theme and theme.Theme then
             for tID, tData in pairs(theme.Theme) do
                 if tData['Name'] == themeName then
@@ -76,11 +87,11 @@ function ThemeBuilder(open)
             end
         end
         
-        open, show = ImGui.Begin("Theme Builder##", open, bit32.bor(ImGuiWindowFlags.NoSavedSettings))
+        open, show = ImGui.Begin("Theme Builder##", open, bit32.bor(ImGuiWindowFlags.None))
         if not show then
-            ImGui.PopStyleColor(ColorCount)
+            if not ApplyGlobalTheme then ImGui.PopStyleColor(ColorCount) end
             ImGui.End()
-            ImGui.PopStyleColor(ColorCount)
+
             return open
         end
         if not tempSettings.Theme[themeID] then
@@ -100,7 +111,7 @@ function ThemeBuilder(open)
         if pressed then
             if tmpName == '' then tmpName = themeName end
             if tempSettings.Theme[themeID]['Name'] ~= tmpName then
-                local nID = themeID + 1
+                local nID = getNextID(tempSettings.Theme)
                 tempSettings.Theme[nID]= {
                     ['Name'] = tmpName,
                     ['Color'] = tempSettings.Theme[themeID]['Color'],
@@ -109,16 +120,55 @@ function ThemeBuilder(open)
             writeSettings(settingsFile, tempSettings)
             theme = deepcopy(tempSettings)
         end
+
+        ImGui.SameLine()
+
+        local newPressed = ImGui.Button("New")
+        if newPressed then
+            local nID = getNextID(tempSettings.Theme)
+                tempSettings.Theme[nID]= {
+                    ['Name'] = tmpName,
+                    ['Color'] = theme.Theme[themeID]['Color'],
+                }
+                themeName = tmpName
+            writeSettings(settingsFile, tempSettings)
+            theme = deepcopy(tempSettings)
+        end
+
+        ImGui.SameLine()
+
+        local gPressed = ImGui.Button("Apply Global")
+        if gPressed then
+            if tmpName == '' then tmpName = themeName end
+            if tempSettings.Theme[themeID]['Name'] ~= tmpName then
+                local nID = getNextID(tempSettings.Theme)
+                tempSettings.Theme[nID]= {
+                    ['Name'] = tmpName,
+                    ['Color'] = tempSettings.Theme[themeID]['Color'],
+                }
+            end
+            ApplyGlobalTheme = not ApplyGlobalTheme
+            -- writeSettings(settingsFile, tempSettings)
+            theme = deepcopy(tempSettings)
+        end
+
+        ImGui.SameLine()
+
+        local ePressed = ImGui.Button("Exit")
+        if ePressed then
+            guiOpen = false
+        end
         -- Edit Name
         ImGui.Text("Cur Theme: %s", themeName)
         tmpName =ImGui.InputText("Theme Name", tmpName)
-        if ImGui.BeginCombo("Loaded Theme", 'None') then
+
+        if ImGui.BeginCombo("Load Theme", themeName) then
             for k, data in pairs(tempSettings.Theme) do
                 local isSelected = (tempSettings.Theme[k]['Name'] == themeName)
                 if ImGui.Selectable(tempSettings.Theme[k]['Name'], isSelected) then
                     tempSettings['LoadTheme'] = tempSettings.Theme[k]['Name']
                     themeName = tempSettings['LoadTheme']
-                    tmpName = ''
+                    tmpName = themeName
                 end
             end
             ImGui.EndCombo()
@@ -128,50 +178,63 @@ function ThemeBuilder(open)
         ImGui.BeginChild("Colors##", ImGui.GetWindowWidth() - 5, xHeight - 5, ImGuiChildFlags.AutoResizeX)
         local collapsed, _ = ImGui.CollapsingHeader("Colors##")
         if not collapsed then
-            tempSettings.Theme[themeID]['Color'][ImGuiCol.WindowBg]               = ImGui.ColorEdit4("WindowBg##" , tempSettings.Theme[themeID]['Color'][ImGuiCol.WindowBg]             )
-            tempSettings.Theme[themeID]['Color'][ImGuiCol.ChildBg]                = ImGui.ColorEdit4("ChildBg##" , tempSettings.Theme[themeID]['Color'][ImGuiCol.ChildBg]               )
-            tempSettings.Theme[themeID]['Color'][ImGuiCol.PopupBg]                = ImGui.ColorEdit4("PopupBg##" , tempSettings.Theme[themeID]['Color'][ImGuiCol.PopupBg]               )
-            tempSettings.Theme[themeID]['Color'][ImGuiCol.Border]                 = ImGui.ColorEdit4("Border##" , tempSettings.Theme[themeID]['Color'][ImGuiCol.Border]                )
-            tempSettings.Theme[themeID]['Color'][ImGuiCol.FrameBg]                = ImGui.ColorEdit4("FrameBg##" , tempSettings.Theme[themeID]['Color'][ImGuiCol.FrameBg]               )
-            tempSettings.Theme[themeID]['Color'][ImGuiCol.FrameBgHovered]         = ImGui.ColorEdit4("FrameBgHovered##" , tempSettings.Theme[themeID]['Color'][ImGuiCol.FrameBgHovered]        )
-            tempSettings.Theme[themeID]['Color'][ImGuiCol.FrameBgActive]          = ImGui.ColorEdit4("FrameBgActive##" , tempSettings.Theme[themeID]['Color'][ImGuiCol.FrameBgActive]          )
-            tempSettings.Theme[themeID]['Color'][ImGuiCol.TitleBg]                = ImGui.ColorEdit4("TitleBg##" , tempSettings.Theme[themeID]['Color'][ImGuiCol.TitleBg]                )
-            tempSettings.Theme[themeID]['Color'][ImGuiCol.TitleBgActive]          = ImGui.ColorEdit4("TitleBgActive##" , tempSettings.Theme[themeID]['Color'][ImGuiCol.TitleBgActive]          )
-            tempSettings.Theme[themeID]['Color'][ImGuiCol.TitleBgCollapsed]       = ImGui.ColorEdit4("TitleBgCollapsed##" , tempSettings.Theme[themeID]['Color'][ImGuiCol.TitleBgCollapsed]       )
-            tempSettings.Theme[themeID]['Color'][ImGuiCol.MenuBarBg]              = ImGui.ColorEdit4("MenuBarBg##" , tempSettings.Theme[themeID]['Color'][ImGuiCol.MenuBarBg]              )
-            tempSettings.Theme[themeID]['Color'][ImGuiCol.ScrollbarBg]            = ImGui.ColorEdit4("ScrollbarBg##" , tempSettings.Theme[themeID]['Color'][ImGuiCol.ScrollbarBg]            )
-            tempSettings.Theme[themeID]['Color'][ImGuiCol.ScrollbarGrab]          = ImGui.ColorEdit4("ScrollarGrab##" , tempSettings.Theme[themeID]['Color'][ImGuiCol.ScrollbarGrab]          )
-            tempSettings.Theme[themeID]['Color'][ImGuiCol.ScrollbarGrabHovered]   = ImGui.ColorEdit4("ScrollbarGrabHovered##" , tempSettings.Theme[themeID]['Color'][ImGuiCol.ScrollbarGrabHovered]   )
-            tempSettings.Theme[themeID]['Color'][ImGuiCol.ScrollbarGrabActive]    = ImGui.ColorEdit4("ScrollbarGrabActive##" , tempSettings.Theme[themeID]['Color'][ImGuiCol.ScrollbarGrabActive]    )
-            tempSettings.Theme[themeID]['Color'][ImGuiCol.SliderGrab]             = ImGui.ColorEdit4("SilderGrab##" , tempSettings.Theme[themeID]['Color'][ImGuiCol.SliderGrab]             )
-            tempSettings.Theme[themeID]['Color'][ImGuiCol.SliderGrabActive]       = ImGui.ColorEdit4("SliderGrabActive##" , tempSettings.Theme[themeID]['Color'][ImGuiCol.SliderGrabActive]       )
-            tempSettings.Theme[themeID]['Color'][ImGuiCol.Button]                 = ImGui.ColorEdit4("Button##" , tempSettings.Theme[themeID]['Color'][ImGuiCol.Button]                 )
-            tempSettings.Theme[themeID]['Color'][ImGuiCol.ButtonHovered]          = ImGui.ColorEdit4("ButtonHovered##" , tempSettings.Theme[themeID]['Color'][ImGuiCol.ButtonHovered]          )
-            tempSettings.Theme[themeID]['Color'][ImGuiCol.ButtonActive]           = ImGui.ColorEdit4("ButtonActive##" , tempSettings.Theme[themeID]['Color'][ImGuiCol.ButtonActive]           )
-            tempSettings.Theme[themeID]['Color'][ImGuiCol.Header]                 = ImGui.ColorEdit4("Header##" , tempSettings.Theme[themeID]['Color'][ImGuiCol.Header]                 )
-            tempSettings.Theme[themeID]['Color'][ImGuiCol.HeaderHovered]          = ImGui.ColorEdit4("HeaderHovered##" , tempSettings.Theme[themeID]['Color'][ImGuiCol.HeaderHovered]          )
-            tempSettings.Theme[themeID]['Color'][ImGuiCol.HeaderActive]           = ImGui.ColorEdit4("HeaderActive##" , tempSettings.Theme[themeID]['Color'][ImGuiCol.HeaderActive]           )
-            tempSettings.Theme[themeID]['Color'][ImGuiCol.Separator]              = ImGui.ColorEdit4("Separator##" , tempSettings.Theme[themeID]['Color'][ImGuiCol.Separator]              )
-            tempSettings.Theme[themeID]['Color'][ImGuiCol.SeparatorHovered]       = ImGui.ColorEdit4("SeparatorHovered##" , tempSettings.Theme[themeID]['Color'][ImGuiCol.SeparatorHovered]       )
-            tempSettings.Theme[themeID]['Color'][ImGuiCol.SeparatorActive]        = ImGui.ColorEdit4("SeparatorActive##" , tempSettings.Theme[themeID]['Color'][ImGuiCol.SeparatorActive]        )
-            tempSettings.Theme[themeID]['Color'][ImGuiCol.ResizeGrip]             = ImGui.ColorEdit4("ResizeGrip##" , tempSettings.Theme[themeID]['Color'][ImGuiCol.ResizeGrip]             )
-            tempSettings.Theme[themeID]['Color'][ImGuiCol.ResizeGripHovered]      = ImGui.ColorEdit4("ResizeGripHovered##" , tempSettings.Theme[themeID]['Color'][ImGuiCol.ResizeGripHovered]      )
-            tempSettings.Theme[themeID]['Color'][ImGuiCol.ResizeGripActive]       = ImGui.ColorEdit4("ResizeGripActive##" , tempSettings.Theme[themeID]['Color'][ImGuiCol.ResizeGripActive]       )
-            tempSettings.Theme[themeID]['Color'][ImGuiCol.Tab]                    = ImGui.ColorEdit4("Tab##" , tempSettings.Theme[themeID]['Color'][ImGuiCol.Tab]                    )
-            tempSettings.Theme[themeID]['Color'][ImGuiCol.TabHovered]             = ImGui.ColorEdit4("TabHovered##" , tempSettings.Theme[themeID]['Color'][ImGuiCol.TabHovered]             )
-            tempSettings.Theme[themeID]['Color'][ImGuiCol.TabActive]              = ImGui.ColorEdit4("TabActive##" , tempSettings.Theme[themeID]['Color'][ImGuiCol.TabActive]              )
-            tempSettings.Theme[themeID]['Color'][ImGuiCol.TabUnfocused]           = ImGui.ColorEdit4("TabUnfocused##" , tempSettings.Theme[themeID]['Color'][ImGuiCol.TabUnfocused]           )
-            tempSettings.Theme[themeID]['Color'][ImGuiCol.TabUnfocusedActive]     = ImGui.ColorEdit4("TabUnfocusedActive##" , tempSettings.Theme[themeID]['Color'][ImGuiCol.TabUnfocusedActive]     )
-            tempSettings.Theme[themeID]['Color'][ImGuiCol.TableHeaderBg]          = ImGui.ColorEdit4("TableHeaderBg##" , tempSettings.Theme[themeID]['Color'][ImGuiCol.TableHeaderBg]          )
-            tempSettings.Theme[themeID]['Color'][ImGuiCol.TableBorderStrong]      = ImGui.ColorEdit4("TableBorderStrong##" , tempSettings.Theme[themeID]['Color'][ImGuiCol.TableBorderStrong]      )
-            tempSettings.Theme[themeID]['Color'][ImGuiCol.TableBorderLight]       = ImGui.ColorEdit4("TableBorderLight##" , tempSettings.Theme[themeID]['Color'][ImGuiCol.TableBorderLight]       )
-            tempSettings.Theme[themeID]['Color'][ImGuiCol.TableRowBg]             = ImGui.ColorEdit4("TableRowBg##" , tempSettings.Theme[themeID]['Color'][ImGuiCol.TableRowBg]             )
-            tempSettings.Theme[themeID]['Color'][ImGuiCol.TableRowBgAlt]          = ImGui.ColorEdit4("TableRodBgAlt##" , tempSettings.Theme[themeID]['Color'][ImGuiCol.TableRowBgAlt]        )
-            tempSettings.Theme[themeID]['Color'][ImGuiCol.TextSelectedBg]         = ImGui.ColorEdit4("TextSelectedBg##" , tempSettings.Theme[themeID]['Color'][ImGuiCol.TextSelectedBg]       )
-            tempSettings.Theme[themeID]['Color'][ImGuiCol.NavHighlight]           = ImGui.ColorEdit4("NavHighlight##" , tempSettings.Theme[themeID]['Color'][ImGuiCol.NavHighlight])
-        end
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.Text]				        =	ImGui.ColorEdit4("Text##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.Text])
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.TextDisabled]				=	ImGui.ColorEdit4("TextDisabled##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.TextDisabled])
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.WindowBg]				    =	ImGui.ColorEdit4("WindowBg##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.WindowBg])
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.ChildBg]				    =	ImGui.ColorEdit4("ChildBg##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.ChildBg])
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.PopupBg]				    =	ImGui.ColorEdit4("PopupBg##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.PopupBg]) 
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.Border]				    =	ImGui.ColorEdit4("Border##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.Border])
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.BorderShadow]				=	ImGui.ColorEdit4("BorderShadow##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.BorderShadow]) 
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.FrameBg]				    =	ImGui.ColorEdit4("FrameBg##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.FrameBg]) 
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.FrameBgHovered]			=	ImGui.ColorEdit4("FrameBgHovered##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.FrameBgHovered]) 
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.FrameBgActive]			=	ImGui.ColorEdit4("FrameBgActive##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.FrameBgActive]) 
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.TitleBg]				    =	ImGui.ColorEdit4("TitleBg##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.TitleBg])
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.TitleBgActive]			=	ImGui.ColorEdit4("TitleBgActive##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.TitleBgActive]) 
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.TitleBgCollapsed]			=	ImGui.ColorEdit4("TitleBgCollapsed##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.TitleBgCollapsed]) 
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.MenuBarBg]				=	ImGui.ColorEdit4("MenuBarBg##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.MenuBarBg])
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.ScrollbarBg]				=	ImGui.ColorEdit4("ScrollbarBg##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.ScrollbarBg])
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.ScrollbarGrab]			=	ImGui.ColorEdit4("ScrollbarGrab##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.ScrollbarGrab])
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.ScrollbarGrabHovered]		=	ImGui.ColorEdit4("ScrollbarGrabHovered##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.ScrollbarGrabHovered]) 
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.ScrollbarGrabActive]		=	ImGui.ColorEdit4("ScrollbarGrabActive##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.ScrollbarGrabActive]) 
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.CheckMark]				=	ImGui.ColorEdit4("CheckMark##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.CheckMark]) 
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.SliderGrab]				=	ImGui.ColorEdit4("SliderGrab##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.SliderGrab])
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.SliderGrabActive]			=	ImGui.ColorEdit4("SliderGrabActive##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.SliderGrabActive])
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.Button]				    =	ImGui.ColorEdit4("Button##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.Button]) 
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.ButtonHovered]			=	ImGui.ColorEdit4("ButtonHovered##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.ButtonHovered])
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.ButtonActive]				=	ImGui.ColorEdit4("ButtonActive##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.ButtonActive]) 
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.Header]				    =	ImGui.ColorEdit4("Header##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.Header]) 
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.HeaderHovered]			=	ImGui.ColorEdit4("HeaderHovered##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.HeaderHovered])
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.HeaderActive]				=	ImGui.ColorEdit4("HeaderActive##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.HeaderActive]) 
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.Separator]				=	ImGui.ColorEdit4("Separator##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.Separator]) 
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.SeparatorHovered]			=	ImGui.ColorEdit4("SeparatorHovered##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.SeparatorHovered]) 
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.SeparatorActive]			=	ImGui.ColorEdit4("SeparatorActive##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.SeparatorActive]) 
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.ResizeGrip]				=	ImGui.ColorEdit4("ResizeGrip##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.ResizeGrip])
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.ResizeGripHovered]		=	ImGui.ColorEdit4("ResizeGripHovered##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.ResizeGripHovered])
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.ResizeGripActive]			=	ImGui.ColorEdit4("ResizeGripActive##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.ResizeGripActive]) 
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.Tab]				        =	ImGui.ColorEdit4("Tab##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.Tab])
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.TabHovered]				=	ImGui.ColorEdit4("TabHovered##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.TabHovered]) 
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.TabActive]				=	ImGui.ColorEdit4("TabActive##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.TabActive])
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.TabUnfocused]				=	ImGui.ColorEdit4("TabUnfocused##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.TabUnfocused])
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.TabUnfocusedActive]		=	ImGui.ColorEdit4("TabUnfocusedActive##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.TabUnfocusedActive]) 
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.DockingPreview]			=	ImGui.ColorEdit4("DockingPreview##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.DockingPreview])
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.DockingEmptyBg]			=	ImGui.ColorEdit4("DockingEmptyBg##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.DockingEmptyBg])
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.PlotLines]				=	ImGui.ColorEdit4("PlotLines##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.PlotLines])
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.PlotLinesHovered]			=	ImGui.ColorEdit4("PlotLinesHovered##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.PlotLinesHovered]) 
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.PlotHistogram]			=	ImGui.ColorEdit4("PlotHistogram##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.PlotHistogram])
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.PlotHistogramHovered]		=	ImGui.ColorEdit4("PlotHistogramHovered##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.PlotHistogramHovered]) 
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.TableHeaderBg]			=	ImGui.ColorEdit4("TableHeaderBg##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.TableHeaderBg])
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.TableBorderStrong]		=	ImGui.ColorEdit4("TableBorderStrong##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.TableBorderStrong]) 
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.TableBorderLight]			=	ImGui.ColorEdit4("TableBorderLight##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.TableBorderLight]) 
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.TableRowBg]				=	ImGui.ColorEdit4("TableRowBg##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.TableRowBg])
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.TableRowBgAlt]			=	ImGui.ColorEdit4("TableRowBgAlt##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.TableRowBgAlt]) 
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.TextSelectedBg]			=	ImGui.ColorEdit4("TextSelectedBg##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.TextSelectedBg])
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.DragDropTarget]			=	ImGui.ColorEdit4("DragDropTarget##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.DragDropTarget])
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.NavHighlight]				=	ImGui.ColorEdit4("NavHighlight##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.NavHighlight]) 
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.NavWindowingHighlight]	=	ImGui.ColorEdit4("NavWindowingHighlight##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.NavWindowingHighlight]) 
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.NavWindowingDimBg]		=	ImGui.ColorEdit4("NavWindowingDimBg##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.NavWindowingDimBg]) 
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.ModalWindowDimBg]			=	ImGui.ColorEdit4("ModalWindowDimBg##" ,tempSettings.Theme[themeID]['Color'][ImGuiCol.ModalWindowDimBg])        end
         ImGui.EndChild()
-        ImGui.PopStyleColor(ColorCount) 
+        if not ApplyGlobalTheme then ImGui.PopStyleColor(ColorCount) end
       --  print(ColorCount)
         ImGui.End()
         
