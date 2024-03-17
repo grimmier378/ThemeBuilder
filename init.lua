@@ -162,7 +162,7 @@ function ThemeBuilder(open)
         ImGui.Text("Cur Theme: %s", themeName)
         tmpName =ImGui.InputText("Theme Name", tmpName)
 
-        if ImGui.BeginCombo("Loaded Theme", 'None') then
+        if ImGui.BeginCombo("Load Theme", themeName) then
             for k, data in pairs(tempSettings.Theme) do
                 local isSelected = (tempSettings.Theme[k]['Name'] == themeName)
                 if ImGui.Selectable(tempSettings.Theme[k]['Name'], isSelected) then
@@ -217,6 +217,7 @@ function ThemeBuilder(open)
             tempSettings.Theme[themeID]['Color'][ImGuiCol.TableBorderLight]       = ImGui.ColorEdit4("TableBorderLight##" , tempSettings.Theme[themeID]['Color'][ImGuiCol.TableBorderLight]       )
             tempSettings.Theme[themeID]['Color'][ImGuiCol.TableRowBg]             = ImGui.ColorEdit4("TableRowBg##" , tempSettings.Theme[themeID]['Color'][ImGuiCol.TableRowBg]             )
             tempSettings.Theme[themeID]['Color'][ImGuiCol.TableRowBgAlt]          = ImGui.ColorEdit4("TableRodBgAlt##" , tempSettings.Theme[themeID]['Color'][ImGuiCol.TableRowBgAlt]        )
+            tempSettings.Theme[themeID]['Color'][ImGuiCol.Text]                   = ImGui.ColorEdit4("Text##" , tempSettings.Theme[themeID]['Color'][ImGuiCol.Text]                    )
             tempSettings.Theme[themeID]['Color'][ImGuiCol.TextSelectedBg]         = ImGui.ColorEdit4("TextSelectedBg##" , tempSettings.Theme[themeID]['Color'][ImGuiCol.TextSelectedBg]       )
             tempSettings.Theme[themeID]['Color'][ImGuiCol.NavHighlight]           = ImGui.ColorEdit4("NavHighlight##" , tempSettings.Theme[themeID]['Color'][ImGuiCol.NavHighlight])
         end

@@ -43,6 +43,7 @@ return {
                 [ImGuiCol.TableBorderLight]       = {0.94, 0.48, 0.09, 1.00},
                 [ImGuiCol.TableRowBg]             = {0.00, 0.00, 0.00, 0.99},
                 [ImGuiCol.TableRowBgAlt]          = {0.00, 0.00, 0.00, 0.97},
+                [ImGuiCol.Text]                   = {1, 1, 1, 1},
                 [ImGuiCol.TextSelectedBg]         = {0.16, 0.16, 0.16, 0.77},
                 [ImGuiCol.NavHighlight]           = {0.05, 0.11, 0.17, 1.00}
             },
