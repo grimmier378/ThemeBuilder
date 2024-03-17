@@ -172,7 +172,7 @@ function ThemeBuilder(open)
         end
         ImGui.EndChild()
         ImGui.PopStyleColor(ColorCount) 
-        print(ColorCount)
+      --  print(ColorCount)
         ImGui.End()
         
     end
