@@ -58,6 +58,7 @@ local function loadSettings()
 end
 -- GUI
 function ThemeBuilder(open)
+    local ColorCount = 0
     if guiOpen then
         local themeID = 0
         local show = false
@@ -77,6 +78,7 @@ function ThemeBuilder(open)
         
         open, show = ImGui.Begin("Theme Builder##", open, bit32.bor(ImGuiWindowFlags.NoSavedSettings))
         if not show then
+            ImGui.PopStyleColor(ColorCount)
             ImGui.End()
             ImGui.PopStyleColor(ColorCount)
             return open
@@ -172,6 +174,7 @@ function ThemeBuilder(open)
         ImGui.PopStyleColor(ColorCount) 
         print(ColorCount)
         ImGui.End()
+        
     end
 end
 local function startup()
