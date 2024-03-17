@@ -8,6 +8,8 @@ Icons = require('mq.ICONS')
 local settingsFile = string.format('%s/MyThemeZ_.lua', mq.configDir)
 local themeName = 'Default'
 local tmpName = 'Default'
+local StyleCount = 0
+local ColorCount = 0
 local tempSettings = {
     ['LoadTheme'] = 'Default',
     Theme = {
@@ -60,19 +62,23 @@ function ThemeBuilder(open)
         local themeID = 0
         local show = false
         local once = false
+        
         if theme and theme.Theme then
             for tID, tData in pairs(theme.Theme) do
                 if tData['Name'] == themeName then
                     themeID = tID
                     for propertyName, cData in pairs(theme.Theme[tID].Color) do
                         ImGui.PushStyleColor(propertyName, ImVec4(cData[1], cData[2], cData[3], cData[4]))
+                        ColorCount = ColorCount +1
                     end
                 end
             end
         end
+        
         open, show = ImGui.Begin("Theme Builder##", open, bit32.bor(ImGuiWindowFlags.NoSavedSettings))
         if not show then
             ImGui.End()
+            ImGui.PopStyleColor(ColorCount)
             return open
         end
         if not tempSettings.Theme[themeID] then
@@ -86,11 +92,8 @@ function ThemeBuilder(open)
             }
         end
         local newName = tempSettings.Theme[themeID]['Name'] -- Store the current name for comparison later
-        local StyleCount = 0
-        local ColorCount = 0
-        for _ in pairs(theme.Theme[themeID].Color) do
-            ColorCount = ColorCount + 1
-        end
+
+
         local pressed = ImGui.Button("Save")
         if pressed then
             if tmpName == '' then tmpName = themeName end
@@ -107,7 +110,6 @@ function ThemeBuilder(open)
         -- Edit Name
         ImGui.Text("Cur Theme: %s", themeName)
         tmpName =ImGui.InputText("Theme Name", tmpName)
-
         if ImGui.BeginCombo("Loaded Theme", 'None') then
             for k, data in pairs(tempSettings.Theme) do
                 local isSelected = (tempSettings.Theme[k]['Name'] == themeName)
@@ -167,7 +169,8 @@ function ThemeBuilder(open)
             tempSettings.Theme[themeID]['Color'][ImGuiCol.NavHighlight]           = ImGui.ColorEdit4("NavHighlight##" , tempSettings.Theme[themeID]['Color'][ImGuiCol.NavHighlight])
         end
         ImGui.EndChild()
-        ImGui.PopStyleColor(ColorCount)
+        ImGui.PopStyleColor(ColorCount) 
+        print(ColorCount)
         ImGui.End()
     end
 end
