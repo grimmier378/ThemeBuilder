@@ -80,7 +80,7 @@ function ThemeBuilder(open)
         if not show then
             ImGui.PopStyleColor(ColorCount)
             ImGui.End()
-            ImGui.PopStyleColor(ColorCount)
+
             return open
         end
         if not tempSettings.Theme[themeID] then
