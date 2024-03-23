@@ -129,6 +129,7 @@ function ThemeBuilder(open)
                     ['Name'] = tmpName,
                     ['Color'] = tempSettings.Theme[themeID]['Color'],
                 }
+                themeID = nID
             end
             writeSettings(settingsFile, tempSettings)
             theme = deepcopy(tempSettings)
@@ -143,7 +144,15 @@ function ThemeBuilder(open)
                     ['Name'] = tmpName,
                     ['Color'] = theme.Theme[themeID]['Color'],
                 }
-                themeName = tmpName
+            themeName = tmpName
+            themeID = nID
+            for k, data in pairs(tempSettings.Theme) do
+                if data.Name == themeName then
+                    tempSettings['LoadTheme'] = data['Name']
+                    themeName = tempSettings['LoadTheme']
+                    tmpName = themeName
+                end
+            end
             writeSettings(settingsFile, tempSettings)
             -- theme = deepcopy(tempSettings)
             theme = tempSettings
@@ -156,14 +165,14 @@ function ThemeBuilder(open)
             guiOpen = false
         end
         -- Edit Name
-        ImGui.Text("Cur Theme: %s", themeName)
+        ImGui.Text("Cur Theme: %s", themeName )
         tmpName =ImGui.InputText("Theme Name", tmpName)
         -- Combo Box Load Theme
         if ImGui.BeginCombo("Load Theme", themeName) then
             for k, data in pairs(tempSettings.Theme) do
-                local isSelected = (tempSettings.Theme[k]['Name'] == themeName)
-                if ImGui.Selectable(tempSettings.Theme[k]['Name'], isSelected) then
-                    tempSettings['LoadTheme'] = tempSettings.Theme[k]['Name']
+                local isSelected = (data['Name'] == themeName)
+                if ImGui.Selectable(data['Name'], isSelected) then
+                    tempSettings['LoadTheme'] = data['Name']
                     themeName = tempSettings['LoadTheme']
                     tmpName = themeName
                 end
