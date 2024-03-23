@@ -4,14 +4,13 @@ local mq = require('mq')
 local ImGui = require 'ImGui'
 local guiOpen = false
 local theme = require('themes')
-local settingsFile = string.format('%s/MyThemeZ_.lua', mq.configDir)
+local settingsFile = string.format('%s/MyThemeZ.lua', mq.configDir)
 local themeName = 'Default'
 local tmpName = 'Default'
 local StyleCount = 0
 local ColorCount = 0
-local ApplyGlobalTheme = false
-local show_app_style_editor = false
-local gFlag = false
+local themeID = 0
+
 local tempSettings = {
     ['LoadTheme'] = 'Default',
     Theme = {
@@ -31,9 +30,11 @@ function File_Exists(name)
     local f=io.open(name,"r")
     if f~=nil then io.close(f) return true else return false end
 end
+
 local function writeSettings(file, settings)
     mq.pickle(file, settings)
 end
+
 local function deepcopy(orig)
     local orig_type = type(orig)
     local copy
@@ -48,6 +49,7 @@ local function deepcopy(orig)
     end
     return copy
 end
+
 local function loadSettings()
     if not File_Exists(settingsFile) then
         mq.pickle(settingsFile, theme)
@@ -62,6 +64,7 @@ local function loadSettings()
     -- tempSettings = deepcopy(theme)
     tempSettings = theme
 end
+
 local function getNextID(table)
     local maxID = 0
     for k, _ in pairs(table) do
@@ -72,7 +75,8 @@ local function getNextID(table)
     end
     return maxID +1
 end
-local themeID = 0
+
+
 -- GUI
 ImGui.SetWindowSize("ThemeZ Builder##", 450, 300, ImGuiCond.FirstUseEver)
 ImGui.SetWindowSize("ThemeZ Builder##", 450, 300, ImGuiCond.Always)
@@ -80,8 +84,7 @@ function ThemeBuilder(open)
     ColorCount = 0
     if guiOpen then
         local show = false
-        local once = false
-        
+
         -- Apply Theme to Window
         if theme and theme.Theme then
             for tID, tData in pairs(theme.Theme) do
@@ -147,44 +150,6 @@ function ThemeBuilder(open)
         end
 
         ImGui.SameLine()
-        -- GLoabally Apply Colors
-        local gPressed = ImGui.Button("Apply Global")
-        if gPressed then
-            show_app_style_editor = false
-            if tmpName == '' then tmpName = themeName end
-            if tempSettings.Theme[themeID]['Name'] ~= tmpName then
-                local nID = getNextID(tempSettings.Theme)
-                tempSettings.Theme[nID]= {
-                    ['Name'] = tmpName,
-                    ['Color'] = tempSettings.Theme[themeID]['Color'],
-                }
-            end
-            
-            show_app_style_editor = not show_app_style_editor
-            gFlag = true
-            -- writeSettings(settingsFile, tempSettings)
-            -- theme = deepcopy(tempSettings)
-            theme = tempSettings
-        end
-
-        ImGui.SameLine()
-        -- GLoabally Apply Colors
-        local gPressed = ImGui.Button("editor")
-        if gPressed then
-            if tmpName == '' then tmpName = themeName end
-            if tempSettings.Theme[themeID]['Name'] ~= tmpName then
-                local nID = getNextID(tempSettings.Theme)
-                tempSettings.Theme[nID]= {
-                    ['Name'] = tmpName,
-                    ['Color'] = tempSettings.Theme[themeID]['Color'],
-                }
-            end
-            show_app_style_editor = not show_app_style_editor
-            -- writeSettings(settingsFile, tempSettings)
-            -- theme = deepcopy(tempSettings)
-            theme = tempSettings
-        end
-        ImGui.SameLine()
         -- Exit/Close
         local ePressed = ImGui.Button("Exit")
         if ePressed then
@@ -220,42 +185,14 @@ function ThemeBuilder(open)
             end
         end
         ImGui.EndChild()
-        -- Pop Styles unless applied globally.
-        if not ApplyGlobalTheme then ImGui.PopStyleColor(ColorCount) end
-        ApplyGlobalTheme = false
+        ImGui.PopStyleColor(ColorCount)
         ImGui.End()
-    end
-end
-local function Style_Editor(open)
-    if not show_app_style_editor then return end
-    if guiOpen then
-        local show = false
-        local once = false
-        local ColorCount = 0
-
-        -- Begin GUI
-        open, show = ImGui.Begin("Dear Imgui Style Editor (lua)", show_app_style_editor)
-        if not show then
-
-
-            ImGui.End()
-            return open
-        end
-        ImGui.ShowStyleEditor()
-
-        ImGui.End()
-        if gFlag then
-            ApplyGlobalTheme = true
-            gFlag = false
-        end
-
     end
 end
 --
 local function startup()
     loadSettings()
     mq.imgui.init("ThemeZ Builder##", ThemeBuilder)
-    mq.imgui.init('Style Editor', Style_Editor)
     guiOpen = true
 end
 --
