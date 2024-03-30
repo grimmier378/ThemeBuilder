@@ -76,6 +76,24 @@ local function getNextID(table)
     return maxID +1
 end
 
+local function exportButtonMaster(table)
+    local BM = {
+        themeName = {
+        },
+    }
+    local bmThemeFile = mq.configDir..'/button_master_theme.lua'
+    if theme and theme.Theme then
+        for tID, tData in pairs(theme.Theme) do
+            if not BM[tData.Name] then BM[tData.Name] = {} end
+                themeID = tID
+                for pID, cData in pairs(theme.Theme[tID].Color) do
+                    if not BM[tData.Name][cData.PropertyName] then BM[tData.Name][cData.PropertyName] = {} end
+                    BM[tData.Name][cData.PropertyName] = {cData.Color[1], cData.Color[2], cData.Color[3], cData.Color[4]}
+                end
+        end
+    end
+    writeSettings(bmThemeFile, BM)
+end
 
 -- GUI
 ImGui.SetWindowSize("ThemeZ Builder##", 450, 300, ImGuiCond.FirstUseEver)
@@ -133,6 +151,13 @@ function ThemeBuilder(open)
             end
             writeSettings(settingsFile, tempSettings)
             theme = deepcopy(tempSettings)
+        end
+        
+        ImGui.SameLine()
+
+        local pressed = ImGui.Button("Export BM Theme")
+        if pressed then
+            exportButtonMaster(tempSettings)
         end
 
         ImGui.SameLine()
