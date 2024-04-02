@@ -77,10 +77,7 @@ local function getNextID(table)
 end
 
 local function exportButtonMaster(table)
-    local BM = {
-        themeName = {
-        },
-    }
+    local BM = {}
     local bmThemeFile = mq.configDir..'/button_master_theme.lua'
     if theme and theme.Theme then
         for tID, tData in pairs(theme.Theme) do
