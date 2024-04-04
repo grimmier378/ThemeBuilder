@@ -3,14 +3,15 @@ local mq = require('mq')
 ---@type ImGui
 local ImGui = require 'ImGui'
 local guiOpen = false
-local theme = require('themes')
+local defaults = require('themes')
+local theme = {}
 local settingsFile = string.format('%s/MyThemeZ.lua', mq.configDir)
 local themeName = 'Default'
 local tmpName = 'Default'
 local StyleCount = 0
 local ColorCount = 0
 local themeID = 0
-
+local tFlags = bit32.bor(ImGuiTableFlags.NoBorders, ImGuiTableFlags.NoBordersInBody)
 local tempSettings = {
     ['LoadTheme'] = 'Default',
     Theme = {
@@ -52,7 +53,7 @@ end
 
 local function loadSettings()
     if not File_Exists(settingsFile) then
-        mq.pickle(settingsFile, theme)
+        mq.pickle(settingsFile, defaults)
         else
         -- Load settings from the Lua config file
         theme = dofile(settingsFile)
@@ -63,6 +64,16 @@ local function loadSettings()
     -- Deep copy theme into tempSettings
     -- tempSettings = deepcopy(theme)
     tempSettings = theme
+    local styleFlag = false
+    for tID, tData in pairs(tempSettings.Theme) do
+        if tData['Style'] == nil or next(tData['Style']) == nil then
+            tempSettings.Theme[tID].Style = {}
+            tempSettings.Theme[tID].Style = defaults['Theme'][1]['Style']
+            styleFlag = true
+        end
+    end
+    if styleFlag then writeSettings(settingsFile, tempSettings) end
+
 end
 
 local function getNextID(table)
@@ -92,11 +103,159 @@ local function exportButtonMaster(table)
     writeSettings(bmThemeFile, BM)
 end
 
+local function DrawStyles()
+    local style = {}
+    style = tempSettings.Theme[themeID]['Style']
+
+    ImGui.SeparatorText('Borders')
+    local tmpBorder = false
+    local borderPressed = false
+    if style[ImGuiStyleVar.WindowBorderSize].Size == 1 then
+        tmpBorder = true
+    end
+    tmpBorder, borderPressed = ImGui.Checkbox('WindowBorder##', tmpBorder)
+    if borderPressed then
+        if tmpBorder then
+            style[ImGuiStyleVar.WindowBorderSize].Size = 1
+        else
+            style[ImGuiStyleVar.WindowBorderSize].Size = 0
+        end
+    end
+    ImGui.SameLine()
+    local tmpFBorder = false
+    local borderFPressed = false
+    if style[ImGuiStyleVar.FrameBorderSize].Size == 1 then
+        tmpFBorder = true
+    end
+    tmpFBorder, borderFPressed = ImGui.Checkbox('FrameBorder##', tmpFBorder)
+    if borderFPressed then
+        if tmpFBorder then
+            style[ImGuiStyleVar.FrameBorderSize].Size = 1
+        else
+            style[ImGuiStyleVar.FrameBorderSize].Size = 0
+        end
+    end
+    ImGui.SameLine()
+    local tmpCBorder = false
+    local borderCPressed = false
+    if style[ImGuiStyleVar.ChildBorderSize].Size == 1 then
+        tmpCBorder = true
+    end
+    tmpCBorder, borderCPressed = ImGui.Checkbox('ChildBorder##', tmpCBorder)
+    if borderCPressed then
+        if tmpCBorder then
+            style[ImGuiStyleVar.ChildBorderSize].Size = 1
+        else
+            style[ImGuiStyleVar.ChildBorderSize].Size = 0
+        end
+    end
+
+    local tmpPBorder = false
+    local borderPPressed = false
+    if style[ImGuiStyleVar.PopupBorderSize].Size == 1 then
+        tmpPBorder = true
+    end
+    tmpPBorder, borderPPressed = ImGui.Checkbox('PopupBorder##', tmpPBorder)
+    if borderPPressed then
+        if tmpPBorder then
+            style[ImGuiStyleVar.PopupBorderSize].Size = 1
+        else
+            style[ImGuiStyleVar.PopupBorderSize].Size = 0
+        end
+    end
+    ImGui.SameLine()
+    local tmpTBorder = false
+    local borderTPressed = false
+    if style[ImGuiStyleVar.TabBarBorderSize].Size == 1 then
+        tmpTBorder = true
+    end
+    tmpTBorder, borderTPressed = ImGui.Checkbox('TabBorder##', tmpTBorder)
+    if borderTPressed then
+        if tmpTBorder then
+            style[ImGuiStyleVar.TabBarBorderSize].Size = 1
+        else
+            style[ImGuiStyleVar.TabBarBorderSize].Size = 0
+        end
+    end
+
+    ImGui.SeparatorText('Main Sizing')
+    ImGui.BeginTable('##StylesMain', 3, tFlags)
+    ImGui.TableSetupColumn('##min', ImGuiTableColumnFlags.None)
+    ImGui.TableSetupColumn('##max', ImGuiTableColumnFlags.None)
+    ImGui.TableSetupColumn('##name', ImGuiTableColumnFlags.None)
+    ImGui.TableNextRow()
+    ImGui.TableNextColumn()
+    ImGui.SetNextItemWidth(100)
+    style[ImGuiStyleVar.WindowPadding].X = ImGui.InputInt('##WindowPadding_X', style[ImGuiStyleVar.WindowPadding].X, 1, 2)
+    ImGui.TableNextColumn()
+    ImGui.SetNextItemWidth(100)
+    style[ImGuiStyleVar.WindowPadding].Y = ImGui.InputInt(' ##WindowPadding_Y', style[ImGuiStyleVar.WindowPadding].Y, 1, 2)
+    ImGui.TableNextColumn()
+    ImGui.Text(style[ImGuiStyleVar.WindowPadding].PropertyName)
+
+    ImGui.TableNextRow()
+    ImGui.TableNextColumn()
+    ImGui.SetNextItemWidth(100)
+    style[ImGuiStyleVar.CellPadding].X = ImGui.InputInt('##CellPadding_X', style[ImGuiStyleVar.CellPadding].X, 1, 2)
+    ImGui.TableNextColumn()
+    ImGui.SetNextItemWidth(100)
+    style[ImGuiStyleVar.CellPadding].Y = ImGui.InputInt(' ##CellPadding_Y', style[ImGuiStyleVar.CellPadding].Y, 1, 2)
+    ImGui.TableNextColumn()
+    ImGui.Text(style[ImGuiStyleVar.CellPadding].PropertyName)
+
+    ImGui.TableNextRow()
+    ImGui.TableNextColumn()
+    ImGui.SetNextItemWidth(100)
+    style[ImGuiStyleVar.FramePadding].X = ImGui.InputInt('##FramePadding_X', style[ImGuiStyleVar.FramePadding].X, 1, 2)
+    ImGui.TableNextColumn()
+    ImGui.SetNextItemWidth(100)
+    style[ImGuiStyleVar.FramePadding].Y = ImGui.InputInt(' ##FramePadding_Y', style[ImGuiStyleVar.FramePadding].Y, 1, 2)
+    ImGui.TableNextColumn()
+    ImGui.Text(style[ImGuiStyleVar.FramePadding].PropertyName)
+
+    ImGui.TableNextRow()
+    ImGui.TableNextColumn()
+    ImGui.SetNextItemWidth(100)
+    style[ImGuiStyleVar.ItemSpacing].X = ImGui.InputInt('##ItemSpacing_X', style[ImGuiStyleVar.ItemSpacing].X, 1, 2)
+    ImGui.TableNextColumn()
+    ImGui.SetNextItemWidth(100)
+    style[ImGuiStyleVar.ItemSpacing].Y = ImGui.InputInt(' ##ItemSpacing_Y', style[ImGuiStyleVar.ItemSpacing].Y, 1, 2)
+    ImGui.TableNextColumn()
+    ImGui.Text(style[ImGuiStyleVar.ItemSpacing].PropertyName)
+
+    ImGui.TableNextRow()
+    ImGui.TableNextColumn()
+    ImGui.SetNextItemWidth(100)
+    style[ImGuiStyleVar.ItemInnerSpacing].X = ImGui.InputInt('##ItemInnerSpacing_X', style[ImGuiStyleVar.ItemInnerSpacing].X, 1, 2)
+    ImGui.TableNextColumn()
+    ImGui.SetNextItemWidth(100)
+    style[ImGuiStyleVar.ItemInnerSpacing].Y = ImGui.InputInt(' ##ItemInnerSpacing_Y', style[ImGuiStyleVar.ItemInnerSpacing].Y, 1, 2)
+    ImGui.TableNextColumn()
+    ImGui.Text(style[ImGuiStyleVar.ItemInnerSpacing].PropertyName)
+
+    ImGui.EndTable()
+
+    style[ImGuiStyleVar.IndentSpacing].Size = ImGui.SliderInt('IndentSpacing##', style[ImGuiStyleVar.IndentSpacing].Size, 0, 30)
+    style[ImGuiStyleVar.ScrollbarSize].Size = ImGui.SliderInt('ScrollbarSize##', style[ImGuiStyleVar.ScrollbarSize].Size, 0,20)
+    style[ImGuiStyleVar.GrabMinSize].Size = ImGui.SliderInt('GrabSize##', style[ImGuiStyleVar.GrabMinSize].Size, 0, 20)
+
+    ImGui.SeparatorText('Rounding')
+    style[ImGuiStyleVar.WindowRounding].Size = ImGui.SliderInt('Window##Rounding', style[ImGuiStyleVar.WindowRounding].Size, 0, 12)
+    style[ImGuiStyleVar.FrameRounding].Size = ImGui.SliderInt('Frame##Rounding', style[ImGuiStyleVar.FrameRounding].Size, 0,12)
+    style[ImGuiStyleVar.ChildRounding].Size = ImGui.SliderInt('Child##Rounding', style[ImGuiStyleVar.ChildRounding].Size, 0, 12)
+    style[ImGuiStyleVar.PopupRounding].Size = ImGui.SliderInt('Popup##Rounding', style[ImGuiStyleVar.PopupRounding].Size, 0,12)
+    style[ImGuiStyleVar.ScrollbarRounding].Size = ImGui.SliderInt('Scrollbar##Rounding', style[ImGuiStyleVar.ScrollbarRounding].Size, 0, 12)
+    style[ImGuiStyleVar.GrabRounding].Size = ImGui.SliderInt('Grab##Rounding', style[ImGuiStyleVar.GrabRounding].Size, 0,12)
+    style[ImGuiStyleVar.TabRounding].Size = ImGui.SliderInt('Tab##Rounding', style[ImGuiStyleVar.TabRounding].Size, 0, 12)
+
+end
+
 -- GUI
 ImGui.SetWindowSize("ThemeZ Builder##", 450, 300, ImGuiCond.FirstUseEver)
 ImGui.SetWindowSize("ThemeZ Builder##", 450, 300, ImGuiCond.Always)
 function ThemeBuilder(open)
     ColorCount = 0
+    StyleCount = 0
     if guiOpen then
         local show = false
 
@@ -109,13 +268,23 @@ function ThemeBuilder(open)
                         ImGui.PushStyleColor(pID, ImVec4(cData.Color[1], cData.Color[2], cData.Color[3], cData.Color[4]))
                         ColorCount = ColorCount +1
                     end
+                    for sID, sData in pairs (theme.Theme[tID].Style) do
+                        if sData.Size ~= nil then
+                            ImGui.PushStyleVar(sID, sData.Size)
+                            StyleCount = StyleCount + 1
+                        elseif sData.X ~= nil then
+                            ImGui.PushStyleVar(sID, sData.X, sData.Y)
+                            StyleCount = StyleCount + 1
+                        end
+                    end
                 end
             end
         end
         -- Begin GUI
-        open, show = ImGui.Begin("ThemeZ Builder##", open, bit32.bor(ImGuiWindowFlags.NoCollapse))
+        open, show = ImGui.Begin("ThemeZ Builder##", open, bit32.bor(ImGuiWindowFlags.NoCollapse, ImGuiWindowFlags.NoScrollbar))
         if not show then
             ImGui.PopStyleColor(ColorCount)
+            ImGui.PopStyleVar(StyleCount)
             ImGui.End()
             return open
         end
@@ -149,7 +318,7 @@ function ThemeBuilder(open)
             writeSettings(settingsFile, tempSettings)
             theme = deepcopy(tempSettings)
         end
-        
+
         ImGui.SameLine()
 
         local pressed = ImGui.Button("Export BM Theme")
@@ -202,8 +371,9 @@ function ThemeBuilder(open)
             ImGui.EndCombo()
         end
         ImGui.Separator()
+
         local cWidth, xHeight = ImGui.GetContentRegionAvail()
-        ImGui.BeginChild("Colors##", ImGui.GetWindowWidth() - 5, xHeight - 5, ImGuiChildFlags.AutoResizeX)
+        ImGui.BeginChild("ThemeZ##", cWidth - 5, xHeight - 15)
         local collapsed, _ = ImGui.CollapsingHeader("Colors##")
         if not collapsed then
             for pID, pData in pairs(tempSettings.Theme[themeID]['Color']) do
@@ -215,7 +385,14 @@ function ThemeBuilder(open)
                 end
             end
         end
+
+        local collapsed2, _ = ImGui.CollapsingHeader("Styles##")
+        if not collapsed2 then
+            DrawStyles()
+        end
+
         ImGui.EndChild()
+        ImGui.PopStyleVar(StyleCount)
         ImGui.PopStyleColor(ColorCount)
         ImGui.End()
     end
@@ -235,3 +412,91 @@ end
 --
 startup()
 loop()
+
+
+
+--[[
+
+       ['Style'] = {
+    [ImGuiStyleVar.WindowBorderSize] = {
+        PropertyName = 'WindowBorderSize',
+        Size = 1,
+    },
+    [ImGuiStyleVar.FrameBorderSize] = {
+        PropertyName = 'FrameBorderSize',
+        Size = 0,
+    },
+    [ImGuiStyleVar.PopupBorderSize] = {
+        PropertyName = 'PopupBorderSize',
+        Size = 1,
+    },
+    [ImGuiStyleVar.ChildBorderSize] = {
+        PropertyName = 'ChildBorderSize',
+        Size = 1,
+    },
+    [ImGuiStyleVar.TabBarBorderSize] = {
+        PropertyName = 'TabBarBorderSize',
+        Size = 1,
+    },
+    [ImGuiStyleVar.WindowRounding] = {
+        PropertyName = 'WindowRounding',
+        Size = 0,
+    },
+    [ImGuiStyleVar.FrameRounding] = {
+        PropertyName = 'FrameRounding',
+        Size = 0,
+    },
+    [ImGuiStyleVar.PopupRounding] = {
+        PropertyName = 'PopupRounding',
+        Size = 0,
+    },
+    [ImGuiStyleVar.ChildRounding] = {
+        PropertyName = 'ChildRounding',
+        Size = 0,
+    },
+    [ImGuiStyleVar.ScrollbarRounding] = {
+        PropertyName = 'ScrollbarRounding',
+        Size = 0,
+    },
+    [ImGuiStyleVar.GrabRounding] = {
+        PropertyName = 'GrabRounding',
+        Size = 0,
+    },
+    [ImGuiStyleVar.TabRounding] = {
+        PropertyName = 'TabRounding',
+        Size = 4,
+    },
+    [ImGuiStyleVar.IndentSpacing] = {
+        PropertyName = 'IndentSpacing',
+        Size = 21,
+    },
+    [ImGuiStyleVar.ScrollbarSize] = {
+        PropertyName = 'ScrollbarSize',
+        Size = 14,
+    },
+    [ImGuiStyleVar.GrabMinSize] = {
+        PropertyName = 'GrabMinSize',
+        Size = 12,
+    },
+    [ImGuiStyleVar.CellPadding] = {
+        PropertyName = 'CellPadding',
+        SizeXY = {4,2},
+    },
+    [ImGuiStyleVar.WindowPadding] = {
+        PropertyName = 'WindowPadding',
+        SizeXY = {8,8},
+    },
+    [ImGuiStyleVar.FramePadding] = {
+        PropertyName = 'FramePadding',
+        SizeXY = {4,3},
+    },
+    [ImGuiStyleVar.ItemSpacing] = {
+        PropertyName = 'ItemSpacing',
+        SizeXY = {8,4},
+    },
+    [ImGuiStyleVar.ItemInnerSpacing] = {
+        PropertyName = 'ItemInnerSpacing',
+        SizeXY = {4,4},
+    },
+
+]]
