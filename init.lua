@@ -54,6 +54,7 @@ end
 local function loadSettings()
     if not File_Exists(settingsFile) then
         mq.pickle(settingsFile, defaults)
+        loadSettings()
         else
         -- Load settings from the Lua config file
         theme = dofile(settingsFile)
@@ -98,6 +99,38 @@ local function exportButtonMaster(table)
                     if not BM[tData.Name][cData.PropertyName] then BM[tData.Name][cData.PropertyName] = {} end
                     BM[tData.Name][cData.PropertyName] = {cData.Color[1], cData.Color[2], cData.Color[3], cData.Color[4]}
                 end
+                for sID, sData in pairs(theme.Theme[tID].Style) do
+                    if not BM[tData.Name][sData.PropertyName] then BM[tData.Name][sData.PropertyName] = {} end
+                    if sData.Size ~= nil then
+                        BM[tData.Name][sData.PropertyName] = {sData.Size}
+                    elseif sData.X ~= nil then
+                        BM[tData.Name][sData.PropertyName] = {sData.X, sData.Y}
+                    end
+                end
+
+        --[[
+
+              WindowPadding = {8.00, 8.00},
+              FramePadding = {5.00, 2.00},
+              CellPadding = {6.00, 6.00},
+              ItemSpacing = {3.00, 3.00},
+              ItemInnerSpacing = {6.00, 6.00},
+              IndentSpacing = {25},
+              ScrollbarSize = {15},
+              GrabMinSize = {10},
+              WindowBorderSize = {1},
+              ChildBorderSize = {1},
+              PopupBorderSize = {1},
+              FrameBorderSize = {3},
+              WindowRounding = {7},
+              ChildRounding = {4},
+              FrameRounding = {5},
+              PopupRounding = {4},
+              ScrollbarRounding = {9},
+              GrabRounding = {3},
+              TabRounding = {4}
+
+        ]]
         end
     end
     writeSettings(bmThemeFile, BM)
@@ -105,6 +138,7 @@ end
 
 local function DrawStyles()
     local style = {}
+    tempSettings.Theme[themeID] = theme.Theme[themeID]
     style = tempSettings.Theme[themeID]['Style']
 
     ImGui.SeparatorText('Borders')
@@ -277,6 +311,7 @@ function ThemeBuilder(open)
                             StyleCount = StyleCount + 1
                         end
                     end
+                    
                 end
             end
         end
@@ -412,91 +447,3 @@ end
 --
 startup()
 loop()
-
-
-
---[[
-
-       ['Style'] = {
-    [ImGuiStyleVar.WindowBorderSize] = {
-        PropertyName = 'WindowBorderSize',
-        Size = 1,
-    },
-    [ImGuiStyleVar.FrameBorderSize] = {
-        PropertyName = 'FrameBorderSize',
-        Size = 0,
-    },
-    [ImGuiStyleVar.PopupBorderSize] = {
-        PropertyName = 'PopupBorderSize',
-        Size = 1,
-    },
-    [ImGuiStyleVar.ChildBorderSize] = {
-        PropertyName = 'ChildBorderSize',
-        Size = 1,
-    },
-    [ImGuiStyleVar.TabBarBorderSize] = {
-        PropertyName = 'TabBarBorderSize',
-        Size = 1,
-    },
-    [ImGuiStyleVar.WindowRounding] = {
-        PropertyName = 'WindowRounding',
-        Size = 0,
-    },
-    [ImGuiStyleVar.FrameRounding] = {
-        PropertyName = 'FrameRounding',
-        Size = 0,
-    },
-    [ImGuiStyleVar.PopupRounding] = {
-        PropertyName = 'PopupRounding',
-        Size = 0,
-    },
-    [ImGuiStyleVar.ChildRounding] = {
-        PropertyName = 'ChildRounding',
-        Size = 0,
-    },
-    [ImGuiStyleVar.ScrollbarRounding] = {
-        PropertyName = 'ScrollbarRounding',
-        Size = 0,
-    },
-    [ImGuiStyleVar.GrabRounding] = {
-        PropertyName = 'GrabRounding',
-        Size = 0,
-    },
-    [ImGuiStyleVar.TabRounding] = {
-        PropertyName = 'TabRounding',
-        Size = 4,
-    },
-    [ImGuiStyleVar.IndentSpacing] = {
-        PropertyName = 'IndentSpacing',
-        Size = 21,
-    },
-    [ImGuiStyleVar.ScrollbarSize] = {
-        PropertyName = 'ScrollbarSize',
-        Size = 14,
-    },
-    [ImGuiStyleVar.GrabMinSize] = {
-        PropertyName = 'GrabMinSize',
-        Size = 12,
-    },
-    [ImGuiStyleVar.CellPadding] = {
-        PropertyName = 'CellPadding',
-        SizeXY = {4,2},
-    },
-    [ImGuiStyleVar.WindowPadding] = {
-        PropertyName = 'WindowPadding',
-        SizeXY = {8,8},
-    },
-    [ImGuiStyleVar.FramePadding] = {
-        PropertyName = 'FramePadding',
-        SizeXY = {4,3},
-    },
-    [ImGuiStyleVar.ItemSpacing] = {
-        PropertyName = 'ItemSpacing',
-        SizeXY = {8,4},
-    },
-    [ImGuiStyleVar.ItemInnerSpacing] = {
-        PropertyName = 'ItemInnerSpacing',
-        SizeXY = {4,4},
-    },
-
-]]
