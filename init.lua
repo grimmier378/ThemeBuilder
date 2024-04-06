@@ -410,7 +410,9 @@ function ThemeBuilder(open)
         local cWidth, xHeight = ImGui.GetContentRegionAvail()
         ImGui.BeginChild("ThemeZ##", cWidth - 5, xHeight - 15)
         local collapsed, _ = ImGui.CollapsingHeader("Colors##")
+        
         if collapsed then
+            ImGui.BeginChild('Colors', 0.0,0.0,ImGuiChildFlags.Border )
             for pID, pData in pairs(tempSettings.Theme[themeID]['Color']) do
                 if pID ~= nil then 
                     local propertyName = pData.PropertyName
@@ -419,11 +421,14 @@ function ThemeBuilder(open)
                     end
                 end
             end
+            ImGui.EndChild()
         end
-
+        
         local collapsed2, _ = ImGui.CollapsingHeader("Styles##")
         if collapsed2 then
+            ImGui.BeginChild('Styles', 0.0,0.0,ImGuiChildFlags.Border )
             DrawStyles()
+            ImGui.EndChild()
         end
 
         ImGui.EndChild()
