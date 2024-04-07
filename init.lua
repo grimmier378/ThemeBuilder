@@ -69,7 +69,7 @@ local function loadSettings()
     for tID, tData in pairs(tempSettings.Theme) do
         if tData['Style'] == nil or next(tData['Style']) == nil then
             tempSettings.Theme[tID].Style = {}
-            tempSettings.Theme[tID].Style = defaults['Theme'][1]['Style']
+            tempSettings.Theme[tID].Style = defaults['Theme'][2]['Style']
             styleFlag = true
         end
     end
@@ -139,6 +139,9 @@ end
 local function DrawStyles()
     local style = {}
     tempSettings.Theme[themeID] = theme.Theme[themeID]
+    if tempSettings.Theme[themeID]['Style'] == nil then
+        tempSettings.Theme[themeID]['Style'] = defaults['Theme'][2]['Style']
+    end
     style = tempSettings.Theme[themeID]['Style']
 
     ImGui.SeparatorText('Borders')
