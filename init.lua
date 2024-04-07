@@ -285,6 +285,7 @@ local function DrawStyles()
 end
 
 -- GUI
+local cFlag = false
 ImGui.SetWindowSize("ThemeZ Builder##", 450, 300, ImGuiCond.FirstUseEver)
 ImGui.SetWindowSize("ThemeZ Builder##", 450, 300, ImGuiCond.Always)
 function ThemeBuilder(open)
@@ -412,7 +413,12 @@ function ThemeBuilder(open)
         local collapsed, _ = ImGui.CollapsingHeader("Colors##")
         
         if collapsed then
-            ImGui.BeginChild('Colors', 0.0,0.0,ImGuiChildFlags.Border )
+            cWidth, xHeight = ImGui.GetContentRegionAvail()
+            if cFlag then
+                ImGui.BeginChild('Colors', cWidth,xHeight * 0.5 ,  ImGuiChildFlags.Border )
+            else
+                ImGui.BeginChild('Colors', cWidth,xHeight ,  ImGuiChildFlags.Border )
+            end
             for pID, pData in pairs(tempSettings.Theme[themeID]['Color']) do
                 if pID ~= nil then 
                     local propertyName = pData.PropertyName
@@ -423,12 +429,19 @@ function ThemeBuilder(open)
             end
             ImGui.EndChild()
         end
-        
+        cWidth, xHeight = ImGui.GetContentRegionAvail()
         local collapsed2, _ = ImGui.CollapsingHeader("Styles##")
         if collapsed2 then
-            ImGui.BeginChild('Styles', 0.0,0.0,ImGuiChildFlags.Border )
+            cFlag = true
+            if not collapsed then
+                ImGui.BeginChild('Styles', cWidth,xHeight ,ImGuiChildFlags.Border )
+            else
+                ImGui.BeginChild('Styles', cWidth,xHeight * 0.5 ,ImGuiChildFlags.Border )
+            end
             DrawStyles()
             ImGui.EndChild()
+        else
+            cFlag = false
         end
 
         ImGui.EndChild()
