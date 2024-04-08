@@ -69,7 +69,14 @@ local function loadSettings()
     for tID, tData in pairs(tempSettings.Theme) do
         if tData['Style'] == nil or next(tData['Style']) == nil then
             tempSettings.Theme[tID].Style = {}
-            tempSettings.Theme[tID].Style = defaults['Theme'][2]['Style']
+            tempSettings.Theme[tID].Style = defaults['Theme'][1]['Style']
+            styleFlag = true
+        end
+    end
+    for tID, tData in pairs(tempSettings.Theme) do
+        if tData['Color'] == nil or next(tData['Color']) == nil then
+            tempSettings.Theme[tID].Color = {}
+            tempSettings.Theme[tID].Color = defaults['Theme'][1]['Color']
             styleFlag = true
         end
     end
@@ -107,30 +114,6 @@ local function exportButtonMaster(table)
                         BM[tData.Name][sData.PropertyName] = {sData.X, sData.Y}
                     end
                 end
-
-        --[[
-
-              WindowPadding = {8.00, 8.00},
-              FramePadding = {5.00, 2.00},
-              CellPadding = {6.00, 6.00},
-              ItemSpacing = {3.00, 3.00},
-              ItemInnerSpacing = {6.00, 6.00},
-              IndentSpacing = {25},
-              ScrollbarSize = {15},
-              GrabMinSize = {10},
-              WindowBorderSize = {1},
-              ChildBorderSize = {1},
-              PopupBorderSize = {1},
-              FrameBorderSize = {3},
-              WindowRounding = {7},
-              ChildRounding = {4},
-              FrameRounding = {5},
-              PopupRounding = {4},
-              ScrollbarRounding = {9},
-              GrabRounding = {3},
-              TabRounding = {4}
-
-        ]]
         end
     end
     writeSettings(bmThemeFile, BM)
