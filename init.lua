@@ -399,6 +399,9 @@ function ThemeBuilder(open)
         local collapsed, _ = ImGui.CollapsingHeader("Colors##")
         
         if collapsed then
+            if ImGui.Button('Defaults##Color') then
+                tempSettings.Theme[themeID]['Color'] = defaults.Theme[1].Color
+            end
             cWidth, xHeight = ImGui.GetContentRegionAvail()
             if cFlag then
                 ImGui.BeginChild('Colors', cWidth,xHeight * 0.5 ,  ImGuiChildFlags.Border )
@@ -423,6 +426,9 @@ function ThemeBuilder(open)
                 ImGui.BeginChild('Styles', cWidth,xHeight ,ImGuiChildFlags.Border )
             else
                 ImGui.BeginChild('Styles', cWidth,xHeight * 0.5 ,ImGuiChildFlags.Border )
+            end
+            if ImGui.Button('Defaults##Style') then
+                tempSettings.Theme[themeID]['Style'] = defaults.Theme[1].Style
             end
             DrawStyles()
             ImGui.EndChild()
