@@ -8,9 +8,10 @@ local theme = {}
 local settingsFile = string.format('%s/MyThemeZ.lua', mq.configDir)
 local themeName = 'Default'
 local tmpName = 'Default'
-local StyleCount = 0
-local ColorCount = 0
+-- local StyleCount = 0
+-- local ColorCount = 0
 local themeID = 0
+local LoadTheme = require('lib.theme_loader')
 local tFlags = bit32.bor(ImGuiTableFlags.NoBorders, ImGuiTableFlags.NoBordersInBody)
 local tempSettings = {
     ['LoadTheme'] = 'Default',
@@ -275,38 +276,38 @@ local cFlag = false
 ImGui.SetWindowSize("ThemeZ Builder##", 450, 300, ImGuiCond.FirstUseEver)
 ImGui.SetWindowSize("ThemeZ Builder##", 450, 300, ImGuiCond.Always)
 function ThemeBuilder(open)
-    ColorCount = 0
-    StyleCount = 0
     if guiOpen then
         local show = false
-
-        -- Apply Theme to Window
+        local ColorCount, StyleCount = 0,0
+        -- -- Apply Theme to Window
         if theme and theme.Theme then
             for tID, tData in pairs(theme.Theme) do
                 if tData['Name'] == themeName then
                     themeID = tID
-                    for pID, cData in pairs(theme.Theme[tID].Color) do
-                        ImGui.PushStyleColor(pID, ImVec4(cData.Color[1], cData.Color[2], cData.Color[3], cData.Color[4]))
-                        ColorCount = ColorCount +1
-                    end
-                    for sID, sData in pairs (theme.Theme[tID].Style) do
-                        if sData.Size ~= nil then
-                            ImGui.PushStyleVar(sID, sData.Size)
-                            StyleCount = StyleCount + 1
-                        elseif sData.X ~= nil then
-                            ImGui.PushStyleVar(sID, sData.X, sData.Y)
-                            StyleCount = StyleCount + 1
-                        end
-                    end
-                    
+                    -- for pID, cData in pairs(theme.Theme[tID].Color) do
+                    --     ImGui.PushStyleColor(pID, ImVec4(cData.Color[1], cData.Color[2], cData.Color[3], cData.Color[4]))
+                    --     ColorCount = ColorCount +1
+                    -- end
+                    -- for sID, sData in pairs (theme.Theme[tID].Style) do
+                    --     if sData.Size ~= nil then
+                    --         ImGui.PushStyleVar(sID, sData.Size)
+                    --         StyleCount = StyleCount + 1
+                    --     elseif sData.X ~= nil then
+                    --         ImGui.PushStyleVar(sID, sData.X, sData.Y)
+                    --         StyleCount = StyleCount + 1
+                    --     end
+                    -- end
+                    ColorCount, StyleCount = LoadTheme.StartTheme(theme.Theme[tID])
                 end
             end
         end
+        
         -- Begin GUI
         open, show = ImGui.Begin("ThemeZ Builder##", open, bit32.bor(ImGuiWindowFlags.NoCollapse, ImGuiWindowFlags.NoScrollbar))
         if not show then
-            ImGui.PopStyleColor(ColorCount)
-            ImGui.PopStyleVar(StyleCount)
+            -- ImGui.PopStyleColor(ColorCount)
+            -- ImGui.PopStyleVar(StyleCount)
+            LoadTheme.EndTheme(ColorCount, StyleCount)
             ImGui.End()
             return open
         end
@@ -437,8 +438,9 @@ function ThemeBuilder(open)
         end
 
         ImGui.EndChild()
-        ImGui.PopStyleVar(StyleCount)
-        ImGui.PopStyleColor(ColorCount)
+        -- ImGui.PopStyleVar(StyleCount)
+        -- ImGui.PopStyleColor(ColorCount)
+        LoadTheme.EndTheme(ColorCount, StyleCount)
         ImGui.End()
     end
 end
