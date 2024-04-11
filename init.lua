@@ -2,7 +2,7 @@
 local mq = require('mq')
 ---@type ImGui
 local ImGui = require 'ImGui'
-local guiOpen = false
+local guiOpen, guiPreview = true, false
 local defaults = require('themes')
 local theme = {}
 local settingsFile = string.format('%s/MyThemeZ.lua', mq.configDir)
@@ -277,7 +277,7 @@ ImGui.SetWindowSize("ThemeZ Builder##", 450, 300, ImGuiCond.FirstUseEver)
 ImGui.SetWindowSize("ThemeZ Builder##", 450, 300, ImGuiCond.Always)
 function ThemeBuilder(open)
     if guiOpen then
-        local show = false
+        local show = true
         local ColorCount, StyleCount = 0,0
         -- -- Apply Theme to Window
         if theme and theme.Theme then
@@ -444,9 +444,85 @@ function ThemeBuilder(open)
         ImGui.End()
     end
 end
+
+local function Preview_GUI()
+    if guiPreview then
+        local show = false
+        local ColorCount, StyleCount = 0,0
+        -- -- Apply Theme to Window
+        if theme and theme.Theme then
+            for tID, tData in pairs(tempSettings.Theme) do
+                if tData['Name'] == themeName then
+                    themeID = tID
+                    ColorCount, StyleCount = LoadTheme.StartTheme(tempSettings.Theme[tID])
+                end
+            end
+        end
+                
+        -- Begin GUI
+        open, show = ImGui.Begin("ThemeZ Preview##", open, bit32.bor(ImGuiWindowFlags.NoCollapse))
+        if not show then
+            LoadTheme.EndTheme(ColorCount, StyleCount)
+            ImGui.End()
+            guiPreview = false
+        end
+        ------------------ Draw sample elements -------------
+
+        local tmpTxt = ''
+        local sampleText = "The quick brown fox jumped over the lazy dog!"
+        local sampleTextLong = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
+
+        ImGui.SeparatorText('Text')
+        ImGui.Text(sampleText)
+        ImGui.SameLine()
+        ImGui.TextDisabled('Disabled Text')
+        ImGui.TextWrapped(sampleTextLong)
+        tmpTxt = ImGui.InputText('Text Input', 'sample text')
+        ImGui.Separator()
+        ImGui.SeparatorText('Text and Widgets')
+        ImGui.BeginChild('sampleChild', 0.0, 100, ImGuiChildFlags.Border)
+            ImGui.BeginTabBar('Tabs##Preview')
+                if ImGui.BeginTabItem('Text and Tables',nil) then
+                    ImGui.BeginTable('SampleTable', 2, ImGuiTableFlags.RowBg)
+                        ImGui.TableSetupColumn('Column1', ImGuiTableColumnFlags.None)
+                        ImGui.TableSetupColumn('Column2', ImGuiTableColumnFlags.None)
+                        ImGui.TableHeadersRow()
+                        ImGui.TableNextRow()
+                        ImGui.TableNextColumn()
+                        ImGui.Text('text1')
+                        ImGui.TableNextColumn()
+                        ImGui.Text('1')
+                        ImGui.TableNextRow()
+                        ImGui.TableNextColumn()
+                        ImGui.TextWrapped(sampleTextLong)
+                        ImGui.TableNextColumn()
+                        ImGui.Text('2')
+                    ImGui.EndTable()
+                ImGui.EndTabItem()
+                end
+                if ImGui.BeginTabItem('Widgets', nil) then
+                    
+                    local o, v = ImGui.CollapsingHeader('header')
+                    if o then
+                        local flag = true
+                        flag = ImGui.Checkbox('checkbox',flag)
+                    end
+                    ImGui.Button('sample button')
+                end
+                ImGui.EndTabItem()
+            ImGui.EndTabBar()
+        ImGui.EndChild()
+        ------------------ End Preview Window ---------------
+        LoadTheme.EndTheme(ColorCount, StyleCount)
+        ImGui.End()
+    end
+end
+
 --
 local function startup()
     loadSettings()
+    guiPreview = false
+    mq.imgui.init("ThemeZ Preview##", Preview_GUI)
     mq.imgui.init("ThemeZ Builder##", ThemeBuilder)
     guiOpen = true
 end
