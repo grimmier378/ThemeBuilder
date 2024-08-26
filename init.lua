@@ -96,6 +96,31 @@ local function getNextID(table)
     return maxID +1
 end
 
+local function exportRGMercs(table)
+    if table == nil then return end
+    local rgThemeFile = mq.configDir..'/rgmercs/rgmercs_theme.lua'
+        local f = io.open(rgThemeFile, "w")
+        if f== nil then
+            error("Error opening file for writing: " .. rgThemeFile)
+            return
+        end
+        local line = 'return {'
+        f:write(line .. "\n")
+        for tID, tData in pairs(theme.Theme) do
+            themeID = tID
+            line = "['"..tData.Name.."'] = {"
+            f:write(line .. "\n")
+            for pID, cData in pairs(theme.Theme[tID].Color) do
+                line = string.format("{ element = ImGuiCol.%s, color = {r = %.2f, g = %.2f,b = %.2f,a = %.2f}, },", cData.PropertyName, cData.Color[1], cData.Color[2], cData.Color[3], cData.Color[4])
+                f:write(line .. "\n")
+            end
+            line = "},"
+            f:write(line .. "\n")
+        end
+        f:write("}")
+        f:close()
+end
+
 local function exportButtonMaster(table)
     local BM = {}
     local bmThemeFile = mq.configDir..'/button_master_theme.lua'
@@ -347,6 +372,13 @@ function ThemeBuilder(open)
         local pressed = ImGui.Button("Export BM Theme")
         if pressed then
             exportButtonMaster(tempSettings)
+        end
+
+        ImGui.SameLine()
+
+        local pressed = ImGui.Button("Export RGMercs Theme")
+        if pressed then
+            exportRGMercs(tempSettings)
         end
 
         ImGui.SameLine()
