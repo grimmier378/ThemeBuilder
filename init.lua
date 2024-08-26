@@ -108,13 +108,13 @@ local function exportRGMercs(table)
         f:write(line .. "\n")
         for tID, tData in pairs(theme.Theme) do
             themeID = tID
-            line = "['"..tData.Name.."'] = {"
+            line = "\t['"..tData.Name.."'] = {"
             f:write(line .. "\n")
             for pID, cData in pairs(theme.Theme[tID].Color) do
-                line = string.format("{ element = ImGuiCol.%s, color = {r = %.2f, g = %.2f,b = %.2f,a = %.2f}, },", cData.PropertyName, cData.Color[1], cData.Color[2], cData.Color[3], cData.Color[4])
+                line = string.format("\t\t{ element = ImGuiCol.%s, color = {r = %.2f, g = %.2f,b = %.2f,a = %.2f}, },", cData.PropertyName, cData.Color[1], cData.Color[2], cData.Color[3], cData.Color[4])
                 f:write(line .. "\n")
             end
-            line = "},"
+            line = "\t},"
             f:write(line .. "\n")
         end
         f:write("}")
